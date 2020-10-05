@@ -6,73 +6,167 @@ import (
 	"testing"
 
 	"github.com/a1ishm/wallet/pkg/types"
+	"github.com/google/uuid"
 )
 
-func TestService_Reject_success(t *testing.T) {
-	svc := &Service{}
-	svc.RegisterAccount("+992000000001")
-	acc, err := svc.FindAccountByID(1)
+type testService struct {
+	*Service
+}
+
+// newTestService f
+func newTestService() *testService {
+	return &testService{Service: &Service{}}
+}
+
+// testAccount t
+type testAccount struct {
+	phone    types.Phone
+	balance  types.Money
+	payments []struct {
+		amount   types.Money
+		category types.PaymentCategory
+	}
+}
+
+var defaultTestAccount = testAccount{
+	phone:   "+992000000001",
+	balance: 10_000_00,
+	payments: []struct {
+		amount   types.Money
+		category types.PaymentCategory
+	}{
+		{amount: 1_000_00, category: "auto"},
+	},
+}
+
+// addAccountWithBalance f
+func (s *testService) addAccount(data testAccount) (*types.Account, []*types.Payment, error) {
+	account, err := s.RegisterAccount(data.phone)
+	if err != nil {
+		return nil, nil, fmt.Errorf("can't register account, error = %v", err)
+	}
+
+	err = s.Deposit(account.ID, data.balance)
+	if err != nil {
+		return nil, nil, fmt.Errorf("can't deposity account, error = %v", err)
+	}
+
+	// выполняем платежи
+	payments := make([]*types.Payment, len(data.payments))
+	for i, payment := range data.payments {
+		payments[i], err = s.Pay(account.ID, payment.amount, payment.category)
+		if err != nil {
+			return nil, nil, fmt.Errorf("can't make payment, error = %v", err)
+		}
+	}
+
+	return account, payments, nil
+}
+
+func TestService_Repeat_success(t *testing.T) {
+	s := newTestService()
+	_, payments, err := s.addAccount(defaultTestAccount)
 
 	if err != nil {
-		fmt.Println(err)
+		t.Error(err)
 		return
 	}
 
-	acc.Balance += 5_000_00
+	payment := payments[0]
+	repeated, err := s.Repeat(payment.ID)
 
-	payment, errr := svc.Pay(1, 1_000_00, "A")
-
-	if errr != nil {
-		fmt.Println(errr)
+	if err != nil {
+		t.Error(err)
 		return
 	}
 
-	paymentID := payment.ID 
+	got := repeated.Amount
 
-	errrr := svc.Reject(paymentID)
+	expected := types.Money(1_000_00)
 
-	if errrr != nil {
-		fmt.Println(errrr)
+	if !reflect.DeepEqual(expected, got) {
+		t.Errorf("invalid result, expected: %v, actual: %v", expected, got)
+	}
+}
+
+func TestService_Repeat_notFound(t *testing.T) {
+	s := newTestService()
+	_, _, err := s.addAccount(testAccount{
+		phone:   "+992000000001",
+		balance: 10_000_00,
+		payments: []struct {
+			amount   types.Money
+			category types.PaymentCategory
+		}{},
+	})
+
+	if err != nil {
+		t.Error(err)
 		return
 	}
 
-	result := acc.Balance
+	_, err = s.Repeat(uuid.New().String())
 
-	expected := types.Money(5_000_00)
+	if err == nil {
+		t.Error(err)
+		return
+	}
 
-	if !reflect.DeepEqual(expected, result) {
-		t.Errorf("invalid result, expected: %v, actual: %v", expected, result)
+	if err != ErrPaymentNotFound {
+		t.Errorf("AAA ERROR: %v", err)
+		return
+	}
+}
+
+func TestService_Reject_success(t *testing.T) {
+	s := newTestService()
+	_, payments, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	payment := payments[0]
+	err = s.Reject(payment.ID)
+
+	if err != nil {
+		t.Errorf("AXAXXAX %v", err)
+		return
+	}
+
+	acc, err := s.FindAccountByID(payment.AccountID)
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	res := acc.Balance
+	expected := types.Money(10_000_00)
+
+	if !reflect.DeepEqual(expected, res) {
+		t.Errorf("invalid result, expected: %v, actual: %v", expected, res)
 	}
 }
 
 func TestService_Reject_notFound(t *testing.T) {
-	svc := &Service{}
-	svc.RegisterAccount("+992000000001")
-	acc, err := svc.FindAccountByID(1)
+	s := newTestService()
+	_, payments, err := s.addAccount(testAccount{
+		phone:   "+992000000001",
+		balance: 10_000_00,
+		payments: []struct {
+			amount   types.Money
+			category types.PaymentCategory
+		}{},
+	})
 
 	if err != nil {
-		fmt.Println(err)
+		t.Error(err)
 		return
 	}
 
-	acc.Balance += 5_000_00
-
-	svc.Pay(1, 1_000_00, "A")
-
-	paymentID := "AXAX" 
-
-	errrr := svc.Reject(paymentID)
-
-	if errrr != nil {
-		fmt.Println(errrr)
+	if len(payments) > 0 {
+		t.Error(err)
 		return
-	}
-
-	result := acc.Balance
-
-	expected := ErrPaymentNotFound
-
-	if !reflect.DeepEqual(expected, result) {
-		t.Errorf("invalid result, expected: %v, actual: %v", expected, result)
 	}
 }
