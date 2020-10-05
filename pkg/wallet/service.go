@@ -37,7 +37,7 @@ func (s *Service) RegisterAccount(phone types.Phone) (*types.Account, error) {
 }
 
 // FindAccountById f
-func (s *Service) FindAccountById(accountID int64) (*types.Account, error) {
+func (s *Service) FindAccountByID(accountID int64) (*types.Account, error) {
 	var acc *types.Account
 	for _, account := range s.accounts {
 		if account.ID == accountID {

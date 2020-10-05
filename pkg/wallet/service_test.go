@@ -8,7 +8,7 @@ import (
 	"github.com/a1ishm/wallet/pkg/types"
 )
 
-func TestService_FindAccountById_success(t *testing.T) {
+func TestService_FindAccountByID_success(t *testing.T) {
 	svc := &Service{}
 	svc.RegisterAccount("+992000000001")
 	svc.RegisterAccount("+992000000002")
@@ -20,7 +20,7 @@ func TestService_FindAccountById_success(t *testing.T) {
 		Balance: 0,
 	}
 
-	result, err := svc.FindAccountById(3)
+	result, err := svc.FindAccountByID(3)
 
 	if err != nil {
 		fmt.Println(err)
@@ -32,13 +32,13 @@ func TestService_FindAccountById_success(t *testing.T) {
 	}
 }
 
-func TestService_FindAccountById_notFound(t *testing.T) {
+func TestService_FindAccountByID_notFound(t *testing.T) {
 	svc := &Service{}
 	svc.RegisterAccount("+992000000001")
 	svc.RegisterAccount("+992000000002")
 	svc.RegisterAccount("+992000000003")
  
-	result, err := svc.FindAccountById(4)
+	result, err := svc.FindAccountByID(4)
 
 	expected := ErrAccountNotFound
 
