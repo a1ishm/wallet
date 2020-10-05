@@ -8,6 +8,9 @@ import (
 // ErrPhoneRegistered v
 var ErrPhoneRegistered = errors.New("phone already registered")
 
+// ErrAccountNotFound v
+var ErrAccountNotFound = errors.New("account not found")
+
 // Service t
 type Service struct {
 	nextAccountID int64
@@ -35,5 +38,12 @@ func (s *Service) RegisterAccount(phone types.Phone) (*types.Account, error) {
 
 // FindAccountById f
 func (s *Service) FindAccountById(accountID int64) (*types.Account, error) {
-
+	var acc *types.Account
+	for _, account := range s.accounts {
+		if account.ID == accountID {
+			acc = account
+			return acc, nil
+		}
+	}
+	return nil, ErrAccountNotFound
 }
