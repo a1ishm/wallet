@@ -148,3 +148,21 @@ func (s *Service) Deposit(accountID int64, amount types.Money) error {
 	account.Balance += amount
 	return nil
 }
+
+// Repeat f
+func (s *Service) Repeat(paymentID string) (*types.Payment, error) {
+	payment, err := s.FindPaymentByID(paymentID)
+
+	if err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	paym, errr := s.Pay(payment.AccountID, payment.Amount, payment.Category)
+	
+	if errr != nil {
+		return nil, errr
+	}
+
+	return paym, errr
+}
