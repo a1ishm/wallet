@@ -126,3 +126,25 @@ func (s *Service) Reject(paymentID string) error {
 	account.Balance += payment.Amount
 	return nil
 }
+
+// Deposit f
+func (s *Service) Deposit(accountID int64, amount types.Money) error {
+	if amount <= 0 {
+		return ErrAmountMustBePositive
+	}
+
+	var account *types.Account
+	for _, acc := range s.accounts {
+		if acc.ID == accountID {
+			account = acc
+			break
+		}
+	}
+
+	if account == nil {
+		return ErrAccountNotFound
+	}
+
+	account.Balance += amount
+	return nil
+}
