@@ -1,5 +1,2 @@
-github.com/a1ishm/bank v1.0.0 h1:eBEwcvkTG9Rph2w9vTJD2YYbEwicVsn829PqDCjhAFQ=
-github.com/a1ishm/bank/v2 v2.0.0 h1:fTsgi+U6d0OwLLtMznguK7jMEIZ1gh8jZABcKBmENXg=
-github.com/a1ishm/bank/v2 v2.0.0/go.mod h1:Xth24sGgcy/GBK8Fh27AuPMR1PGmTYmwUR+jm5rMI2s=
 github.com/google/uuid v1.1.2 h1:EVhdT+1Kseyi1/pUmXKaFxYsDNy9RQYkMWRH68J/W7Y=
 github.com/google/uuid v1.1.2/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=

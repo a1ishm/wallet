@@ -170,3 +170,96 @@ func TestService_Reject_notFound(t *testing.T) {
 		return
 	}
 }
+
+func TestService_FavoritePayment_success(t *testing.T) {
+	s := newTestService();
+	_, payments, err := s.addAccount(defaultTestAccount)
+
+	payment := payments[0]
+	favorite, err := s.FavoritePayment(payment.ID, "WISH")
+	
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	got := favorite
+	exp := s.favorites[0]
+
+	if !reflect.DeepEqual(exp, got) {
+		t.Errorf("invalid result, expected: %v, actual: %v", exp, got)
+	}
+}
+
+func TestService_FavoritePayment_notFound(t *testing.T) {
+	s := newTestService();
+	_, _, err := s.addAccount(defaultTestAccount)
+
+	paymID := "AXAX"
+	_, err = s.FavoritePayment(paymID, "WISH")
+	
+	if err == nil {
+		t.Error(err)
+		return
+	}
+
+	if err != ErrPaymentNotFound {
+		t.Errorf("AAA ERROR: %v", err)
+		return
+	}
+}
+
+func TestService_PayFromFavorite_success(t *testing.T) {
+	s := newTestService();
+	_, payments, err := s.addAccount(defaultTestAccount)
+
+	payment := payments[0]
+	favorite, err := s.FavoritePayment(payment.ID, "WISH")
+	
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	favPay, err := s.PayFromFavorite(favorite.ID)
+
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	lastPayIndex := len(payments) - 1
+	lastPay := payments[lastPayIndex]
+
+	got := favPay.Amount
+	exp := lastPay.Amount
+
+	if !reflect.DeepEqual(got, exp) {
+		t.Errorf("invalid result, expected: %v, actual: %v", got, exp)
+	}
+}
+
+func TestService_PayFromFavorite_notFound(t *testing.T) {
+	s := newTestService();
+	_, _, err := s.addAccount(defaultTestAccount)
+
+	paymID := "AXAX"
+	_, err = s.FavoritePayment(paymID, "WISH")
+	
+	if err == nil {
+		t.Error(err)
+		return
+	}
+
+	_, err = s.PayFromFavorite(paymID)
+
+	if err == nil {
+		t.Error(err)
+		return
+	}
+
+	if err != ErrPaymentNotFound {
+		t.Errorf("AAA ERROR: %v", err)
+		return
+	}
+}
