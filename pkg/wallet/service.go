@@ -210,7 +210,7 @@ func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
 	favorite, err := s.FindFavoriteByID(favoriteID)
 
 	if err != nil {
-		return nil, ErrPaymentNotFound
+		return nil, ErrFavoriteNotFound
 	}
 
 	payment, err := s.Pay(favorite.AccountID, favorite.Amount, favorite.Category)
