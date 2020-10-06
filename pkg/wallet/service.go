@@ -17,6 +17,9 @@ var ErrAccountNotFound = errors.New("account not found")
 // ErrPaymentNotFound v
 var ErrPaymentNotFound = errors.New("payment not found")
 
+// ErrFavoriteNotFound v
+var ErrFavoriteNotFound = errors.New("favorite not found")
+
 // ErrAmountMustBePositive v
 var ErrAmountMustBePositive = errors.New("amount must be positive")
 
