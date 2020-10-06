@@ -3,6 +3,7 @@ package wallet
 import (
 	"errors"
 	"fmt"
+
 	"github.com/a1ishm/wallet/pkg/types"
 	"github.com/google/uuid"
 )
@@ -27,6 +28,7 @@ type Service struct {
 	nextAccountID int64
 	accounts      []*types.Account
 	payments      []*types.Payment
+	favorites     []*types.Favorite
 }
 
 // RegisterAccount f
@@ -115,7 +117,7 @@ func (s *Service) Reject(paymentID string) error {
 	}
 
 	payment.Status = types.PaymentStatusFail
-	
+
 	account, errr := s.FindAccountByID(payment.AccountID)
 
 	if errr != nil {
@@ -159,10 +161,61 @@ func (s *Service) Repeat(paymentID string) (*types.Payment, error) {
 	}
 
 	paym, errr := s.Pay(payment.AccountID, payment.Amount, payment.Category)
-	
+
 	if errr != nil {
 		return nil, errr
 	}
 
 	return paym, errr
 }
+
+// FavoritePayment f
+func (s *Service) FavoritePayment(paymentID string, name string) (*types.Favorite, error) {
+	payment, err := s.FindPaymentByID(paymentID)
+
+	if err != nil {
+		return nil, ErrPaymentNotFound
+	}
+
+	favoriteID := uuid.New().String()
+	favorite := &types.Favorite{
+		ID:        favoriteID,
+		AccountID: payment.AccountID,
+		Name:      name,
+		Amount:    payment.Amount,
+		Category:  payment.Category,
+	}
+
+	s.favorites = append(s.favorites, favorite)
+	return favorite, nil
+}
+
+// FindFavoriteByID f
+func (s *Service) FindFavoriteByID(favoriteID string) (*types.Favorite, error) {
+	var fav *types.Favorite
+	for _, favorite := range s.favorites {
+		if favorite.ID == favoriteID {
+			fav = favorite
+			return fav, nil
+		}
+	}
+	return nil, ErrPaymentNotFound
+}
+
+// PayFromFavorite f
+func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
+	favorite, err := s.FindFavoriteByID(favoriteID)
+
+	if err != nil {
+		return nil, ErrPaymentNotFound
+	}
+
+	payment, err := s.Pay(favorite.AccountID, favorite.Amount, favorite.Category)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return payment, nil
+}
+
