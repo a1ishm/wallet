@@ -258,7 +258,7 @@ func TestService_PayFromFavorite_notFound(t *testing.T) {
 		return
 	}
 
-	if err != ErrPaymentNotFound {
+	if err != ErrFavoriteNotFound {
 		t.Errorf("AAA ERROR: %v", err)
 		return
 	}
