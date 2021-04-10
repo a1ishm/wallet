@@ -135,13 +135,13 @@ func (s *Service) Reject(paymentID string) error {
 		return err
 	}
 
-	payment.Status = types.PaymentStatusFail
 	account, err := s.FindAccountByID(payment.AccountID)
 
 	if err != nil {
 		return err
 	}
 
+	payment.Status = types.PaymentStatusFail
 	account.Balance += payment.Amount
 	return nil
 }
