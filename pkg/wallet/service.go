@@ -12,6 +12,8 @@ var ErrAmountMustBePositive = errors.New("amount must be greater than zero")
 var ErrAccountNotFound = errors.New("account not found")
 var ErrNotEnoughBalance = errors.New("not enough balance")
 var ErrPaymentNotFound = errors.New("payment not found")
+var ErrFavoriteNotFound = errors.New("favorite not found")
+
 
 type Error string
 
@@ -176,3 +178,33 @@ func (s *Service) FavoritePayment(paymentID string, name string) (*types.Favorit
 	s.favorites = append(s.favorites, favorite)
 	return favorite, nil
 }
+
+func (s *Service) FindFavoriteByID(favoriteID string) (*types.Favorite, error) {
+	var favorite *types.Favorite
+	for _, fav := range s.favorites {
+		if fav.ID == favoriteID {
+			favorite = fav
+			break
+		}
+	}
+
+	if favorite == nil {
+		return nil, ErrFavoriteNotFound
+	}
+
+	return favorite, nil
+}
+
+func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
+	favorite, err := s.FindFavoriteByID(favoriteID)
+	if err != nil {
+		return nil, err
+	}
+
+	payment, err := s.Pay(favorite.AccountID, favorite.Amount, favorite.Category)
+	if err != nil {
+		return nil, err
+	}
+
+	return payment, nil
+}	
