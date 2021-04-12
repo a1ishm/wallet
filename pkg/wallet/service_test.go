@@ -203,3 +203,26 @@ func TestService_Repeat_notFound(t *testing.T) {
 		return
 	}
 }
+
+func TestService_FavoritePayment(t *testing.T) {
+	s := newTestService()
+	_, payments, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	
+	favorite, err := s.FavoritePayment(payments[0].ID, "fav")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	got := favorite.ID
+	exp := payments[0].ID
+
+	if !reflect.DeepEqual(exp, got) {
+		t.Errorf("invalid result, expected: %v, actual: %v", exp, got)
+	}
+}
+
