@@ -203,3 +203,79 @@ func TestService_Repeat_notFound(t *testing.T) {
 		return
 	}
 }
+
+func TestService_FavoritePayment(t *testing.T) {
+	s := newTestService()
+	_, payments, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	
+	favorite, err := s.FavoritePayment(payments[0].ID, "fav")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	got := favorite.ID
+	exp := payments[0].ID
+
+	if !reflect.DeepEqual(exp, got) {
+		t.Errorf("invalid result, expected: %v, actual: %v", exp, got)
+	}
+}
+
+func TestService_PayFromFavorite(t *testing.T) {
+	s := newTestService()
+	_, payments, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	favorite, err := s.FavoritePayment(payments[0].ID, "fav")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	payment, err := s.PayFromFavorite(favorite.ID)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	got := payment.Amount
+	exp := payments[0].Amount
+
+	if !reflect.DeepEqual(exp, got) {
+		t.Errorf("invalid result, expected: %v, actual: %v", exp, got)
+	}
+}
+
+func TestService_PayFromFavorite_notFound(t *testing.T) {
+	s := newTestService()
+	_, payments, err := s.addAccount(defaultTestAccount)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	_, err = s.FavoritePayment(payments[0].ID, "fav")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	_, err = s.PayFromFavorite(uuid.New().String())
+	if err == nil {
+		t.Errorf("PayFromFavorite(): must return error, returned nil")
+		return
+	}
+
+	if err != ErrFavoriteNotFound {
+		t.Errorf("PayFromFavorite(): must return ErrFavoriteNotFound, returned %v", err)
+		return
+	}
+}
