@@ -218,8 +218,8 @@ func TestService_FavoritePayment(t *testing.T) {
 		return
 	}
 
-	got := favorite.ID
-	exp := payments[0].ID
+	got := favorite.Amount
+	exp := payments[0].Amount
 
 	if !reflect.DeepEqual(exp, got) {
 		t.Errorf("invalid result, expected: %v, actual: %v", exp, got)
