@@ -211,7 +211,7 @@ func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
 }	
 
 func (s *Service) ExportToFile(path string) error {
-	file, err := os.Open(path)
+	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
