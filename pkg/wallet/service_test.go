@@ -2,11 +2,12 @@ package wallet
 
 import (
 	"fmt"
-	"github.com/a1ishm/wallet/pkg/types"
-	"github.com/google/uuid"
 	"math/rand"
 	"reflect"
 	"testing"
+	// "strconv"
+	"github.com/a1ishm/wallet/pkg/types"
+	"github.com/google/uuid"
 )
 
 type testService struct {
