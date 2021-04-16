@@ -2,7 +2,9 @@ package wallet
 
 import (
 	"errors"
-
+	"log"
+	"os"
+	"strconv"
 	"github.com/a1ishm/wallet/pkg/types"
 	"github.com/google/uuid"
 )
@@ -13,7 +15,6 @@ var ErrAccountNotFound = errors.New("account not found")
 var ErrNotEnoughBalance = errors.New("not enough balance")
 var ErrPaymentNotFound = errors.New("payment not found")
 var ErrFavoriteNotFound = errors.New("favorite not found")
-
 
 type Error string
 
@@ -208,3 +209,41 @@ func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
 
 	return payment, nil
 }	
+
+func (s *Service) ExportToFile(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cerr := file.Close()
+		if cerr != nil {
+			log.Print(cerr)
+		}
+	}()
+	
+	var content string
+
+	for i, account := range s.accounts {
+		id := strconv.FormatInt(account.ID, 10)
+		phone := string(account.Phone)
+		balance := strconv.FormatInt(int64(account.Balance), 10)
+
+		var acc string
+
+		if i == (len(s.accounts) - 1) {
+			acc = id + ";" + phone + ";" + balance 
+		} else {
+			acc = id + ";" + phone + ";" + balance + "|"
+		}
+		
+		content += acc
+	}
+	
+	_, err = file.Write([]byte(content))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
