@@ -2,9 +2,12 @@ package wallet
 
 import (
 	"errors"
+	"io"
 	"log"
 	"os"
 	"strconv"
+	"strings"
+
 	"github.com/a1ishm/wallet/pkg/types"
 	"github.com/google/uuid"
 )
@@ -222,7 +225,7 @@ func (s *Service) ExportToFile(path string) error {
 		}
 	}()
 	
-	var content string
+	var data string
 
 	for i, account := range s.accounts {
 		id := strconv.FormatInt(account.ID, 10)
@@ -237,12 +240,69 @@ func (s *Service) ExportToFile(path string) error {
 			acc = id + ";" + phone + ";" + balance + "|"
 		}
 		
-		content += acc
+		data += acc
 	}
 	
-	_, err = file.Write([]byte(content))
+	_, err = file.Write([]byte(data))
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (s *Service) ImportFromFile(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		cerr := file.Close()
+		if cerr != nil {
+			log.Print(cerr)
+		}
+	}()
+
+	content := make([]byte, 0)
+	buf := make([]byte, 4)
+	for {
+		read, err := file.Read(buf)
+		if err == io.EOF {
+			content = append(content, buf[:read]...)
+			break
+		}
+
+		if err != nil {
+			return err
+		}
+
+		content = append(content, buf[:read]...)
+	}
+
+	data := string(content)
+	accProps := strings.Split(data, "|")
+
+	for _, acc := range accProps {
+		var account types.Account
+		props := strings.Split(acc, ";")
+
+		id, err := strconv.ParseInt(props[0], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		phone := types.Phone(props[1])
+
+		balance, err := strconv.ParseInt(props[0], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		account.ID = id
+		account.Phone = phone
+		account.Balance = types.Money(balance)
+
+		s.accounts = append(s.accounts, &account)
 	}
 
 	return nil
