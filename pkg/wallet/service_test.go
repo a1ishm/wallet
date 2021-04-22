@@ -2,7 +2,6 @@ package wallet
 
 import (
 	"fmt"
-	"log"
 	"math/rand"
 	"reflect"
 	"testing"
@@ -313,7 +312,7 @@ func TestExport_all(t *testing.T) {
 
 	err := s.Export("../../files")
 	if err != nil {
-		log.Print(err)
+		t.Error(err)
 	}
 }
 
@@ -340,6 +339,24 @@ func TestExport_noFavs(t *testing.T) {
 
 	err := s.Export("../../files")
 	if err != nil {
-		log.Print(err)
+		t.Error(err)
 	}
+}
+
+func TestImport(t *testing.T) {
+	s := newTestService()
+	as := []*types.Account{
+		{ID: 1, Phone: "+992150000001", Balance: 10_000_00},
+		{ID: 2, Phone: "+992150000002", Balance: 20_000_00},
+		{ID: 3, Phone: "+992150000003", Balance: 30_000_00},
+	}
+	s.accounts = append(s.accounts, as...)
+
+	err := s.Import("../../files")
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	fmt.Print(s.accounts, s.payments, s.favorites)
 }

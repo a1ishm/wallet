@@ -1,6 +1,7 @@
 package wallet
 
 import (
+	"bufio"
 	"errors"
 	"io"
 	"log"
@@ -293,7 +294,7 @@ func (s *Service) ImportFromFile(path string) error {
 
 		phone := types.Phone(props[1])
 
-		balance, err := strconv.ParseInt(props[0], 10, 64)
+		balance, err := strconv.ParseInt(props[2], 10, 64)
 		if err != nil {
 			return err
 		}
@@ -422,6 +423,315 @@ func (s *Service) Export(dir string) error {
 	}
 
 	err = file.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func importAccount(dir string, s *Service) error {
+	file, err := os.Open((dir + "/accounts.dump"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	reader := bufio.NewReader(file)
+	for {
+		line, err := reader.ReadString('\n')
+		if err == io.EOF {
+			var account types.Account
+			props := strings.Split(line, ";")
+
+			id, err := strconv.ParseInt(props[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			phone := types.Phone(props[1])
+
+			balance, err := strconv.ParseInt(strings.Trim(props[2], "\n"), 10, 64)
+			if err != nil {
+				return err
+			}
+
+			account.ID = id
+			account.Phone = phone
+			account.Balance = types.Money(balance)
+
+			flag := false
+			for i, acc := range s.accounts {
+				if acc.ID == id {
+					s.accounts[i] = &account
+					flag = true
+					break
+				}
+			}
+			if !flag {
+				s.accounts = append(s.accounts, &account)
+				s.nextAccountID = id
+				break
+			}
+		}
+		if err != nil {
+			return err
+		}
+
+		var account types.Account
+		props := strings.Split(line, ";")
+
+		id, err := strconv.ParseInt(props[0], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		phone := types.Phone(props[1])
+
+		balance, err := strconv.ParseInt(strings.Trim(props[2], "\n"), 10, 64)
+		if err != nil {
+			return err
+		}
+
+		account.ID = id
+		account.Phone = phone
+		account.Balance = types.Money(balance)
+		flag := false
+		for i, acc := range s.accounts {
+			if acc.ID == id {
+				s.accounts[i] = &account
+				flag = true
+				break
+			}
+		}
+		if !flag {
+			s.accounts = append(s.accounts, &account)
+			s.nextAccountID = id
+		}
+	}
+
+	err = file.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func importPayment(dir string, s *Service) error {
+	file, err := os.Open((dir + "/payments.dump"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	reader := bufio.NewReader(file)
+	for {
+		line, err := reader.ReadString('\n')
+		if err == io.EOF {
+			var payment types.Payment
+			props := strings.Split(line, ";")
+
+			id := props[0]
+
+			accountID, err := strconv.ParseInt(props[1], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			amount, err := strconv.ParseInt(props[2], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			category := props[3]
+			status := props[4]
+
+			payment.ID = id
+			payment.AccountID = accountID
+			payment.Amount = types.Money(amount)
+			payment.Category = types.PaymentCategory(category)
+			payment.Status = types.PaymentStatus(status)
+
+			idFound := false
+			for i, paym := range s.payments {
+				if paym.ID == id {
+					s.payments[i] = &payment
+					idFound = true
+					break
+				}
+			}
+			if !idFound {
+				s.payments = append(s.payments, &payment)
+				break
+			}
+		}
+		if err != nil {
+			return err
+		}
+
+		var payment types.Payment
+		props := strings.Split(line, ";")
+
+		id := props[0]
+
+		accountID, err := strconv.ParseInt(props[1], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		amount, err := strconv.ParseInt(props[2], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		category := props[3]
+		status := props[4]
+
+		payment.ID = id
+		payment.AccountID = accountID
+		payment.Amount = types.Money(amount)
+		payment.Category = types.PaymentCategory(category)
+		payment.Status = types.PaymentStatus(status)
+		idFound := false
+		for i, paym := range s.payments {
+			if paym.ID == id {
+				s.payments[i] = &payment
+				idFound = true
+				break
+			}
+		}
+		if !idFound {
+			s.payments = append(s.payments, &payment)
+		}
+	}
+
+	err = file.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func importFavorite(dir string, s *Service) error {
+	file, err := os.Open((dir + "/favorites.dump"))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+
+	reader := bufio.NewReader(file)
+	for {
+		line, err := reader.ReadString('\n')
+		if err == io.EOF {
+			var favorite types.Favorite
+			props := strings.Split(line, ";")
+
+			id := props[0]
+
+			accountID, err := strconv.ParseInt(props[1], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			name := props[2]
+
+			amount, err := strconv.ParseInt(props[3], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			category := props[4]
+
+			favorite.ID = id
+			favorite.AccountID = accountID
+			favorite.Name = name
+			favorite.Amount = types.Money(amount)
+			favorite.Category = types.PaymentCategory(category)
+			idFound := false
+			for i, fav := range s.favorites {
+				if fav.ID == id {
+					s.favorites[i] = &favorite
+					idFound = true
+					break
+				}
+			}
+			if !idFound {
+				s.favorites = append(s.favorites, &favorite)
+				break
+			}
+		}
+		if err != nil {
+			return err
+		}
+
+		var favorite types.Favorite
+		props := strings.Split(line, ";")
+
+		id := props[0]
+
+		accountID, err := strconv.ParseInt(props[1], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		name := props[2]
+
+		amount, err := strconv.ParseInt(props[3], 10, 64)
+		if err != nil {
+			return err
+		}
+
+		category := props[4]
+
+		favorite.ID = id
+		favorite.AccountID = accountID
+		favorite.Name = name
+		favorite.Amount = types.Money(amount)
+		favorite.Category = types.PaymentCategory(category)
+		idFound := false
+		for i, fav := range s.favorites {
+			if fav.ID == id {
+				s.favorites[i] = &favorite
+				idFound = true
+				break
+			}
+		}
+		if !idFound {
+			s.favorites = append(s.favorites, &favorite)
+		}
+	}
+
+	err = file.Close()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) Import(dir string) error {
+	/* accounts import */
+	err := importAccount(dir, s)
+	if err != nil {
+		return err
+	}
+
+	/* payments import */
+	err = importPayment(dir, s)
+	if err != nil {
+		return err
+	}
+
+	/* favorites import */
+	err = importFavorite(dir, s)
 	if err != nil {
 		return err
 	}
