@@ -363,7 +363,7 @@ func (s *Service) Export(dir string) error {
 			accountID := strconv.FormatInt(payment.AccountID, 10)
 			amount := strconv.FormatInt(int64(payment.AccountID), 10)
 			category := string(payment.Category)
-			status := string(payment.Status)
+			status := strings.Trim(string(payment.Status), "\n")
 
 			var paym string
 
@@ -374,8 +374,9 @@ func (s *Service) Export(dir string) error {
 			}
 
 			data += paym
+			log.Print(data)
 		}
-
+		log.Print(data)
 		_, err = file.Write([]byte(data))
 		if err != nil {
 			return err
@@ -404,7 +405,7 @@ func (s *Service) Export(dir string) error {
 		accountID := strconv.FormatInt(favorite.AccountID, 10)
 		name := favorite.Name
 		amount := strconv.FormatInt(int64(favorite.AccountID), 10)
-		category := string(favorite.Category)
+		category := strings.Trim(string(favorite.Category), "\n")
 
 		var fav string
 
@@ -430,7 +431,7 @@ func (s *Service) Export(dir string) error {
 	return nil
 }
 
-func importAccount(dir string, s *Service) error {
+func importAccounts(dir string, s *Service) error {
 	file, err := os.Open((dir + "/accounts.dump"))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -520,7 +521,7 @@ func importAccount(dir string, s *Service) error {
 	return nil
 }
 
-func importPayment(dir string, s *Service) error {
+func importPayments(dir string, s *Service) error {
 	file, err := os.Open((dir + "/payments.dump"))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -618,7 +619,7 @@ func importPayment(dir string, s *Service) error {
 	return nil
 }
 
-func importFavorite(dir string, s *Service) error {
+func importFavorites(dir string, s *Service) error {
 	file, err := os.Open((dir + "/favorites.dump"))
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -719,19 +720,19 @@ func importFavorite(dir string, s *Service) error {
 
 func (s *Service) Import(dir string) error {
 	/* accounts import */
-	err := importAccount(dir, s)
+	err := importAccounts(dir, s)
 	if err != nil {
 		return err
 	}
 
 	/* payments import */
-	err = importPayment(dir, s)
+	err = importPayments(dir, s)
 	if err != nil {
 		return err
 	}
 
 	/* favorites import */
-	err = importFavorite(dir, s)
+	err = importFavorites(dir, s)
 	if err != nil {
 		return err
 	}
