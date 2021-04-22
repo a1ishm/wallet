@@ -2,9 +2,11 @@ package wallet
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"reflect"
 	"testing"
+
 	// "strconv"
 	"github.com/a1ishm/wallet/pkg/types"
 	"github.com/google/uuid"
@@ -212,7 +214,7 @@ func TestService_FavoritePayment(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	
+
 	favorite, err := s.FavoritePayment(payments[0].ID, "fav")
 	if err != nil {
 		t.Error(err)
@@ -278,5 +280,66 @@ func TestService_PayFromFavorite_notFound(t *testing.T) {
 	if err != ErrFavoriteNotFound {
 		t.Errorf("PayFromFavorite(): must return ErrFavoriteNotFound, returned %v", err)
 		return
+	}
+}
+
+func TestExport_all(t *testing.T) {
+	s := newTestService()
+	as := []*types.Account{
+		{ID: 1, Phone: "+992000000001", Balance: 10_000_00},
+		{ID: 2, Phone: "+992000000002", Balance: 20_000_00},
+		{ID: 3, Phone: "+992000000003", Balance: 30_000_00},
+		{ID: 4, Phone: "+992000000004", Balance: 40_000_00},
+		{ID: 5, Phone: "+992000000005", Balance: 50_000_00},
+	}
+
+	ps := []*types.Payment{
+		{ID: "a", AccountID: 1, Amount: 11_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "b", AccountID: 1, Amount: 22_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "c", AccountID: 1, Amount: 33_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "d", AccountID: 4, Amount: 44_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "e", AccountID: 5, Amount: 55_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	fvs := []*types.Favorite{
+		{ID: "f", AccountID: 1, Name: "Fav0", Amount: 11_000_00, Category: "auto"},
+		{ID: "g", AccountID: 1, Name: "Fav1", Amount: 22_000_00, Category: "food"},
+		{ID: "h", AccountID: 1, Name: "Fav2", Amount: 33_000_00, Category: "food"},
+	}
+
+	s.accounts = append(s.accounts, as...)
+	s.payments = append(s.payments, ps...)
+	s.favorites = append(s.favorites, fvs...)
+
+	err := s.Export("../../files")
+	if err != nil {
+		log.Print(err)
+	}
+}
+
+func TestExport_noFavs(t *testing.T) {
+	s := newTestService()
+	as := []*types.Account{
+		{ID: 1, Phone: "+992000000001", Balance: 10_000_00},
+		{ID: 2, Phone: "+992000000002", Balance: 20_000_00},
+		{ID: 3, Phone: "+992000000003", Balance: 30_000_00},
+		{ID: 4, Phone: "+992000000004", Balance: 40_000_00},
+		{ID: 5, Phone: "+992000000005", Balance: 50_000_00},
+	}
+
+	ps := []*types.Payment{
+		{ID: "a", AccountID: 1, Amount: 11_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "b", AccountID: 1, Amount: 22_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "c", AccountID: 1, Amount: 33_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "d", AccountID: 4, Amount: 44_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "e", AccountID: 5, Amount: 55_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	s.accounts = append(s.accounts, as...)
+	s.payments = append(s.payments, ps...)
+
+	err := s.Export("../../files")
+	if err != nil {
+		log.Print(err)
 	}
 }

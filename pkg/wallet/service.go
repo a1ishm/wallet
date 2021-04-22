@@ -172,11 +172,11 @@ func (s *Service) FavoritePayment(paymentID string, name string) (*types.Favorit
 	}
 
 	favorite := &types.Favorite{
-		ID: uuid.New().String(),
+		ID:        uuid.New().String(),
 		AccountID: payment.AccountID,
-		Name: name,
-		Amount: payment.Amount,
-		Category: payment.Category,
+		Name:      name,
+		Amount:    payment.Amount,
+		Category:  payment.Category,
 	}
 
 	s.favorites = append(s.favorites, favorite)
@@ -211,7 +211,7 @@ func (s *Service) PayFromFavorite(favoriteID string) (*types.Payment, error) {
 	}
 
 	return payment, nil
-}	
+}
 
 func (s *Service) ExportToFile(path string) error {
 	file, err := os.Create(path)
@@ -224,7 +224,7 @@ func (s *Service) ExportToFile(path string) error {
 			log.Print(cerr)
 		}
 	}()
-	
+
 	var data string
 
 	for i, account := range s.accounts {
@@ -235,14 +235,14 @@ func (s *Service) ExportToFile(path string) error {
 		var acc string
 
 		if i == (len(s.accounts) - 1) {
-			acc = id + ";" + phone + ";" + balance 
+			acc = id + ";" + phone + ";" + balance
 		} else {
 			acc = id + ";" + phone + ";" + balance + "|"
 		}
-		
+
 		data += acc
 	}
-	
+
 	_, err = file.Write([]byte(data))
 	if err != nil {
 		return err
@@ -303,6 +303,127 @@ func (s *Service) ImportFromFile(path string) error {
 		account.Balance = types.Money(balance)
 
 		s.accounts = append(s.accounts, &account)
+	}
+
+	return nil
+}
+
+func (s *Service) Export(dir string) error {
+	/* accounts export */
+
+	if len(s.accounts) == 0 {
+		return nil
+	}
+
+	file, err := os.Create((dir + "/accounts.dump"))
+	if err != nil {
+		return err
+	}
+
+	var data string
+
+	for i, account := range s.accounts {
+		id := strconv.FormatInt(account.ID, 10)
+		phone := string(account.Phone)
+		balance := strconv.FormatInt(int64(account.Balance), 10)
+
+		var acc string
+
+		if i == (len(s.accounts) - 1) {
+			acc = id + ";" + phone + ";" + balance
+		} else {
+			acc = id + ";" + phone + ";" + balance + "\n"
+		}
+
+		data += acc
+	}
+
+	_, err = file.Write([]byte(data))
+	if err != nil {
+		return err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return err
+	}
+	data = ""
+
+	/* payments export */
+
+	if len(s.payments) != 0 {
+		file, err = os.Create((dir + "/payments.dump"))
+		if err != nil {
+			return err
+		}
+
+		for i, payment := range s.payments {
+			id := payment.ID
+			accountID := strconv.FormatInt(payment.AccountID, 10)
+			amount := strconv.FormatInt(int64(payment.AccountID), 10)
+			category := string(payment.Category)
+			status := string(payment.Status)
+
+			var paym string
+
+			if i == (len(s.payments) - 1) {
+				paym = id + ";" + accountID + ";" + amount + ";" + category + ";" + status
+			} else {
+				paym = id + ";" + accountID + ";" + amount + ";" + category + ";" + status + "\n"
+			}
+
+			data += paym
+		}
+
+		_, err = file.Write([]byte(data))
+		if err != nil {
+			return err
+		}
+
+		err = file.Close()
+		if err != nil {
+			return err
+		}
+		data = ""
+	}
+
+	/* favorites export */
+
+	if len(s.favorites) == 0 {
+		return nil
+	}
+
+	file, err = os.Create((dir + "/favorites.dump"))
+	if err != nil {
+		return err
+	}
+
+	for i, favorite := range s.favorites {
+		id := favorite.ID
+		accountID := strconv.FormatInt(favorite.AccountID, 10)
+		name := favorite.Name
+		amount := strconv.FormatInt(int64(favorite.AccountID), 10)
+		category := string(favorite.Category)
+
+		var fav string
+
+		if i == (len(s.favorites) - 1) {
+			fav = id + ";" + accountID + ";" + name + ";" + amount + ";" + category
+		} else {
+			fav = id + ";" + accountID + ";" + name + ";" + amount + ";" + category + "\n"
+		}
+
+		data += fav
+	}
+
+	_, err = file.Write([]byte(data))
+	if err != nil {
+		return err
+	}
+
+	err = file.Close()
+	if err != nil {
+		return err
 	}
 
 	return nil
