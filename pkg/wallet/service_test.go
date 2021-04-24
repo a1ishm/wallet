@@ -282,81 +282,69 @@ func TestService_PayFromFavorite_notFound(t *testing.T) {
 	}
 }
 
-func TestExport_all(t *testing.T) {
-	s := newTestService()
-	as := []*types.Account{
-		{ID: 1, Phone: "+992000000001", Balance: 10_000_00},
-		{ID: 2, Phone: "+992000000002", Balance: 20_000_00},
-		{ID: 3, Phone: "+992000000003", Balance: 30_000_00},
-		{ID: 4, Phone: "+992000000004", Balance: 40_000_00},
-		{ID: 5, Phone: "+992000000005", Balance: 50_000_00},
-	}
+// func TestExport_all(t *testing.T) {
+// 	s := newTestService()
+// 	as := []*types.Account{
+// 		{ID: 1, Phone: "+992100000001", Balance: 11_111_10},
+// 		{ID: 2, Phone: "+992100000011", Balance: 11_111_00},
+// 		{ID: 3, Phone: "+992100000111", Balance: 11_110_00},
+// 		{ID: 4, Phone: "+992100001111", Balance: 11_100_00},
+// 		{ID: 5, Phone: "+992100011111", Balance: 11_000_00},
+// 	}
 
-	ps := []*types.Payment{
-		{ID: "a", AccountID: 1, Amount: 11_000_00, Category: "auto", Status: types.PaymentStatusOk},
-		{ID: "b", AccountID: 1, Amount: 22_000_00, Category: "food", Status: types.PaymentStatusOk},
-		{ID: "c", AccountID: 1, Amount: 33_000_00, Category: "food", Status: types.PaymentStatusOk},
-		{ID: "d", AccountID: 4, Amount: 44_000_00, Category: "auto", Status: types.PaymentStatusOk},
-		{ID: "e", AccountID: 5, Amount: 55_000_00, Category: "auto", Status: types.PaymentStatusOk},
-	}
+// 	ps := []*types.Payment{
+// 		{ID: "aaa", AccountID: 1, Amount: 22_000_00, Category: "auto", Status: types.PaymentStatusOk},
+// 		{ID: "bbb", AccountID: 1, Amount: 22_200_00, Category: "food", Status: types.PaymentStatusOk},
+// 		{ID: "ccc", AccountID: 1, Amount: 22_220_00, Category: "food", Status: types.PaymentStatusOk},
+// 		{ID: "ddd", AccountID: 4, Amount: 22_222_00, Category: "auto", Status: types.PaymentStatusOk},
+// 		{ID: "eee", AccountID: 5, Amount: 22_222_20, Category: "auto", Status: types.PaymentStatusOk},
+// 	}
 
-	fvs := []*types.Favorite{
-		{ID: "f", AccountID: 1, Name: "Fav0", Amount: 11_000_00, Category: "auto"},
-		{ID: "g", AccountID: 1, Name: "Fav1", Amount: 22_000_00, Category: "food"},
-		{ID: "h", AccountID: 1, Name: "Fav2", Amount: 33_000_00, Category: "food"},
-	}
+// 	fvs := []*types.Favorite{
+// 		{ID: "fff", AccountID: 1, Name: "Fav0", Amount: 30_000_00, Category: "auto"},
+// 		{ID: "ggg", AccountID: 1, Name: "Fav1", Amount: 33_000_00, Category: "food"},
+// 		{ID: "hhh", AccountID: 1, Name: "Fav2", Amount: 33_300_00, Category: "food"},
+// 	}
 
-	s.accounts = append(s.accounts, as...)
-	s.payments = append(s.payments, ps...)
-	s.favorites = append(s.favorites, fvs...)
+// 	s.accounts = append(s.accounts, as...)
+// 	s.payments = append(s.payments, ps...)
+// 	s.favorites = append(s.favorites, fvs...)
 
-	err := s.Export("../../files")
-	if err != nil {
-		t.Error(err)
-	}
-}
+// 	err := s.Export("../../files/")
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// }
 
-func TestExport_noFavs(t *testing.T) {
-	s := newTestService()
-	as := []*types.Account{
-		{ID: 1, Phone: "+992000000001", Balance: 10_000_00},
-		{ID: 2, Phone: "+992000000002", Balance: 20_000_00},
-		{ID: 3, Phone: "+992000000003", Balance: 30_000_00},
-		{ID: 4, Phone: "+992000000004", Balance: 40_000_00},
-		{ID: 5, Phone: "+992000000005", Balance: 50_000_00},
-	}
+// func TestImportExport(t *testing.T) {
+// 	s := newTestService()
 
-	ps := []*types.Payment{
-		{ID: "a", AccountID: 1, Amount: 11_000_00, Category: "auto", Status: types.PaymentStatusOk},
-		{ID: "b", AccountID: 1, Amount: 22_000_00, Category: "food", Status: types.PaymentStatusOk},
-		{ID: "c", AccountID: 1, Amount: 33_000_00, Category: "food", Status: types.PaymentStatusOk},
-		{ID: "d", AccountID: 4, Amount: 44_000_00, Category: "auto", Status: types.PaymentStatusOk},
-		{ID: "e", AccountID: 5, Amount: 55_000_00, Category: "auto", Status: types.PaymentStatusOk},
-	}
+// 	as := []*types.Account{
+// 		{ID: 1, Phone: "+992000000001", Balance: 10_000_00},
+// 		{ID: 4, Phone: "+992000000002", Balance: 40_000_00},
+// 		{ID: 5, Phone: "+992000000003", Balance: 50_000_00},
+// 		{ID: 6, Phone: "+992000000004", Balance: 60_000_00},
+// 		{ID: 7, Phone: "+992000000005", Balance: 70_000_00},
+// 	}
 
-	s.accounts = append(s.accounts, as...)
-	s.payments = append(s.payments, ps...)
+// 	ps := []*types.Payment{
+// 		{ID: "aaa", AccountID: 1, Amount: 11_000_00, Category: "auto", Status: types.PaymentStatusOk},
+// 		{ID: "bbb", AccountID: 1, Amount: 22_000_00, Category: "food", Status: types.PaymentStatusOk},
+// 		{ID: "ccc", AccountID: 1, Amount: 33_000_00, Category: "food", Status: types.PaymentStatusOk},
+// 		{ID: "oooooooo", AccountID: 4, Amount: 44_000_00, Category: "auto", Status: types.PaymentStatusOk},
+// 		{ID: "eee", AccountID: 5, Amount: 55_000_00, Category: "auto", Status: types.PaymentStatusOk},
+// 	}
 
-	err := s.Export("../../files")
-	if err != nil {
-		t.Error(err)
-	}
-}
+// 	s.accounts = append(s.accounts, as...)
+// 	s.payments = append(s.payments, ps...)
 
-func TestImport(t *testing.T) {
-	s := newTestService()
-	as := []*types.Account{
-		{ID: 1, Phone: "+992150000001", Balance: 10_000_00},
-		{ID: 2, Phone: "+992150000002", Balance: 20_000_00},
-		{ID: 3, Phone: "+992150000003", Balance: 30_000_00},
-	}
-	s.accounts = append(s.accounts, as...)
+// 	err := s.Import("../../files/")
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
 
-	err := s.Import("../../files")
-
-	if err != nil {
-		t.Error(err)
-	}
-
-	fmt.Print(s.accounts, s.payments, s.favorites)
-}
+// 	err = s.Export("../../txts/")
+// 	if err != nil {
+// 		t.Error(err)
+// 	}
+// }
