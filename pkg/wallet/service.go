@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -310,14 +311,18 @@ func (s *Service) ImportFromFile(path string) error {
 }
 
 func (s *Service) Export(dir string) error {
-	aPath := dir + "accounts.dump" // если не примет, то убрать слэш в названии файла
-	pPath := dir + "payments.dump"
-	fPath := dir + "favorites.dump"
+	var err error
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+	aPath := abs + "/accounts.dump" // если не примет, то убрать слэш в названии файла
+	pPath := abs + "/payments.dump"
+	fPath := abs + "/favorites.dump"
 
 	var accounts *os.File
 	var payments *os.File
 	var favorites *os.File
-	var err error
 
 	aExist := true
 	pExist := true
@@ -453,9 +458,14 @@ func (s *Service) Export(dir string) error {
 }
 
 func (s *Service) Import(dir string) error {
-	aPath := dir + "accounts.dump" // если не примет, то убрать слэш в названии файла
-	pPath := dir + "payments.dump"
-	fPath := dir + "favorites.dump"
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+
+	aPath := abs + "/accounts.dump" // если не примет, то убрать слэш в названии файла
+	pPath := abs + "/payments.dump"
+	fPath := abs + "/favorites.dump"
 
 	aExist := true
 	pExist := true
