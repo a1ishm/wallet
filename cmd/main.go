@@ -3,7 +3,8 @@ package main
 import (
 	// "io"
 	"log"
-	"os"
+	// "os"
+	"path/filepath"
 	// "strconv"
 	// "strings"
 	// "github.com/a1ishm/wallet/pkg/types"
@@ -19,14 +20,19 @@ func main() {
 	// }
 
 	// arr := []*types.Account{}
-	path := "files/accs.txt"
-
-	_, err := os.Open(path)
+	path := "../../files"
+	abs, err := filepath.Abs(path)
 	if err != nil {
-		if os.IsNotExist(err) {
-			log.Print("file doesn't exist")
-		}
-	} else {
-		log.Print("error, not expected")
+		log.Print(err)
 	}
+	log.Print(abs)
+
+	// _, err := os.Open(path)
+	// if err != nil {
+	// 	if os.IsNotExist(err) {
+	// 		log.Print("file doesn't exist")
+	// 	}
+	// } else {
+	// 	log.Print("error, not expected")
+	// }
 }
