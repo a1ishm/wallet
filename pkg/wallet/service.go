@@ -704,6 +704,10 @@ func (s *Service) HistoryToFiles(payments []types.Payment, dir string, records i
 		return nil
 	}
 
+	if records < 1 {
+		return Error("there must be at least 1 record")
+	}
+
 	if records > len(payments) {
 		records = len(payments)
 	}
