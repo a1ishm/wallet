@@ -507,7 +507,7 @@ func (s *Service) Import(dir string) error {
 		if !aExist {
 			break
 		}
-		
+
 		line, err := reader.ReadString('\n') // есть очень тупая идея на запас*
 		if err == io.EOF {
 			eof = true
@@ -669,6 +669,99 @@ func (s *Service) Import(dir string) error {
 	}
 	if fExist {
 		err = favorites.Close()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) ExportAccountHistory(accountID int64) ([]types.Payment, error) {
+	var account *types.Account
+	for _, acc := range s.accounts {
+		if acc.ID == accountID {
+			account = acc
+			break
+		}
+	}
+	if account == nil {
+		return nil, ErrAccountNotFound
+	}
+
+	var payments []types.Payment
+	for _, payment := range s.payments {
+		if payment.AccountID == accountID {
+			payments = append(payments, *payment)
+		}
+	}
+
+	return payments, nil
+}
+
+func (s *Service) HistoryToFiles(payments []types.Payment, dir string, records int) error {
+	if payments == nil {
+		return nil
+	}
+
+	if records > len(payments) {
+		records = len(payments)
+	}
+
+	abs, err := filepath.Abs(dir)
+	if err != nil {
+		return err
+	}
+
+	num := (len(payments) / records)
+	if len(payments)%records != 0 && num >= 1 {
+		num++
+	}
+
+	var iter int
+	for i := 0; i < num; i++ {
+		path := abs + "/payments" + strconv.Itoa(i+1) + ".dump"
+		if num <= 1 {
+			path = abs + "/payments.dump"
+		}
+
+		record, err := os.Create(path)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			cerr := record.Close()
+			if cerr != nil {
+				log.Print(cerr)
+			}
+		}()
+
+		if iter == records {
+			if len(payments)%records != 0 {
+				records = len(payments) % records
+			}
+		}
+
+		var data string
+		for x := 0; x < records; x++ {
+			payment := payments[iter]
+			iter++
+
+			id := payment.ID
+			accountID := strconv.Itoa(int(payment.AccountID))
+			amount := strconv.Itoa(int(payment.Amount))
+			category := string(payment.Category)
+			status := string(payment.Status)
+
+			line := id + ";" + accountID + ";" + amount + ";" + category + ";" + status + "\n"
+			if x == records-1 {
+				line = id + ";" + accountID + ";" + amount + ";" + category + ";" + status
+			}
+
+			data += line
+		}
+
+		_, err = record.Write([]byte(data))
 		if err != nil {
 			return err
 		}
