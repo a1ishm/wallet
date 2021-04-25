@@ -346,7 +346,7 @@ func TestHistoryToFiles(t *testing.T) {
 		t.Error(err)
 	}
 
-	err = s.HistoryToFiles(payments, "../../files", 6)
+	err = s.HistoryToFiles(payments, "../../files", 5)
 	if err != nil {
 		t.Error(err)
 	}
