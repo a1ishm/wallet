@@ -787,26 +787,19 @@ func (s *Service) SumPayments(goroutines int) types.Money {
 	}
 
 	div := []int{}
-	add := len(s.payments) / goroutines
 	floatAdd := float64(len(s.payments)) / float64(goroutines)
 	start := 0
 	end := 0
+	divSum := 0
 
 	for i := 0; i < goroutines; i++ {
 		if i == goroutines-1 {
-			if int(math.Round(floatAdd)) == add {
-				div = append(div, add+(len(s.payments)%goroutines))
-			} else {
-				div = append(div, add)
-			}
+			div = append(div, len(s.payments)-divSum)
 			break
 		}
 
-		if int(math.Round(floatAdd)) == add {
-			div = append(div, add)
-		} else {
-			div = append(div, add+1)
-		}
+		div = append(div, int(math.Ceil(floatAdd)))
+		divSum += div[i]
 	}
 
 	for i := 0; i < goroutines; i++ {
