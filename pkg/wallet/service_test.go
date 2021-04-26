@@ -316,6 +316,45 @@ func TestExport_all(t *testing.T) {
 	}
 }
 
+func TestExportImport(t *testing.T) {
+	s := newTestService()
+	as := []*types.Account{
+		{ID: 1, Phone: "+992100000001", Balance: 11_111_10},
+		{ID: 2, Phone: "+992100000011", Balance: 11_111_00},
+		{ID: 3, Phone: "+992100000111", Balance: 11_110_00},
+		{ID: 4, Phone: "+992100001111", Balance: 11_100_00},
+		{ID: 5, Phone: "+992100011111", Balance: 11_000_00},
+	}
+
+	ps := []*types.Payment{
+		{ID: "aaa", AccountID: 1, Amount: 22_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "bbb", AccountID: 1, Amount: 22_200_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "ccc", AccountID: 1, Amount: 22_220_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "ddd", AccountID: 4, Amount: 22_222_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "eee", AccountID: 5, Amount: 22_222_20, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	fvs := []*types.Favorite{
+		{ID: "fff", AccountID: 1, Name: "Fav0", Amount: 30_000_00, Category: "auto"},
+		{ID: "ggg", AccountID: 1, Name: "Fav1", Amount: 33_000_00, Category: "food"},
+		{ID: "hhh", AccountID: 1, Name: "Fav2", Amount: 33_300_00, Category: "food"},
+	}
+
+	s.accounts = append(s.accounts, as...)
+	s.payments = append(s.payments, ps...)
+	s.favorites = append(s.favorites, fvs...)
+
+	err := s.Export("../../files")
+	if err != nil {
+		t.Error(err)
+	}
+	
+	err = s.Import("../../files")
+	if err != nil {
+		t.Error(err)
+	}
+}
+
 func TestHistoryToFiles(t *testing.T) {
 	s := newTestService()
 	as := []*types.Account{
@@ -349,5 +388,32 @@ func TestHistoryToFiles(t *testing.T) {
 	err = s.HistoryToFiles(payments, "../../files", 5)
 	if err != nil {
 		t.Error(err)
+	}
+}
+
+func BenchmarkSumPayments(b *testing.B) {
+	s := newTestService()
+	want := types.Money(280_000_00)
+	ps := []*types.Payment{
+		{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "D", AccountID: 4, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "E", AccountID: 5, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "G", AccountID: 7, Amount: 70_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	s.payments = append(s.payments, ps...)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		result := s.SumPayments(3)
+
+		b.StopTimer()
+		if result != want {
+			b.Fatalf("invalid result, got %v, want %v", result, want)
+		}
+		b.StartTimer()
 	}
 }
