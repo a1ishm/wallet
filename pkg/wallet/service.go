@@ -5,10 +5,12 @@ import (
 	"errors"
 	"io"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/a1ishm/wallet/pkg/types"
 	"github.com/google/uuid"
@@ -772,4 +774,73 @@ func (s *Service) HistoryToFiles(payments []types.Payment, dir string, records i
 	}
 
 	return nil
+}
+
+func (s *Service) SumPayments(goroutines int) types.Money {
+	wg := sync.WaitGroup{}
+
+	mu := sync.Mutex{}
+	sum := int64(0)
+
+	if goroutines > len(s.payments) {
+		goroutines = len(s.payments)
+	}
+
+	div := []int{}
+	add := len(s.payments) / goroutines
+	floatAdd := float64(len(s.payments)) / float64(goroutines)
+	start := 0
+	end := 0
+
+	for i := 0; i < goroutines; i++ {
+		if i == goroutines-1 {
+			if int(math.Round(floatAdd)) == add {
+				div = append(div, add+(len(s.payments)%goroutines))
+			} else {
+				div = append(div, add)
+			}
+			break
+		}
+
+		if int(math.Round(floatAdd)) == add {
+			div = append(div, add)
+		} else {
+			div = append(div, add+1)
+		}
+	}
+
+	for i := 0; i < goroutines; i++ {
+		if goroutines <= 1 {
+			end += div[i]
+			payments := append([]*types.Payment{}, s.payments[start:end]...)
+			start += div[i]
+
+			val := int64(0)
+			for _, payment := range payments {
+				val += int64(payment.Amount)
+			}
+			sum += val
+			break
+		}
+
+		wg.Add(1)
+		go func(iter int) {
+			defer wg.Done()
+
+			end += div[iter]
+			payments := append([]*types.Payment{}, s.payments[start:end]...)
+			start += div[iter]
+
+			val := int64(0)
+			for _, payment := range payments {
+				val += int64(payment.Amount)
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			sum += val
+		}(i)
+		wg.Wait()
+	}
+
+	return types.Money(sum)
 }

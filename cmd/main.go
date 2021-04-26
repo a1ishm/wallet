@@ -3,18 +3,182 @@ package main
 import (
 	// "io"
 	"log"
-	// "strconv"
+	"math"
+	"sync"
 	// "os"
 	// "path/filepath"
 	// "strconv"
 	// "strings"
-	// "github.com/a1ishm/wallet/pkg/types"
+	"github.com/a1ishm/wallet/pkg/types"
 )
 
 func main() {
-	for i := 0; i < 2; i++ {
-		log.Print(i+1)
+	goroutines := 3
+
+	ps := []*types.Payment{
+		{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "D", AccountID: 4, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "E", AccountID: 5, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
 	}
+
+	wg := sync.WaitGroup{}
+
+	mu := sync.Mutex{}
+	sum := int64(0)
+
+	if goroutines > len(ps) {
+		goroutines = len(ps)
+	}
+
+	div := []int{}
+
+	add := len(ps) / goroutines
+
+	floatAdd := float64(len(ps)) / float64(goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		if i == goroutines-1 {
+			if int(math.Round(floatAdd)) == add {
+				div = append(div, add+(len(ps)%goroutines))
+			} else {
+				div = append(div, add)
+			}
+			break
+		}
+
+		if int(math.Round(floatAdd)) == add {
+			div = append(div, add)
+		} else {
+			div = append(div, add+1)
+		}
+	}
+	log.Print(div)
+	// lastAdd := len(s.payments) % goroutines
+
+	start := 0
+	end := 0
+	
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func(iter int) {
+			defer wg.Done()
+
+			end += div[iter]
+			payments := append([]*types.Payment{}, ps[start:end]...)
+			log.Printf("start: %v; end: %v", start, end)
+			start += div[iter]
+
+			val := int64(0)
+			for _, payment := range payments {
+				val += int64(payment.Amount)
+			}
+			mu.Lock()
+			defer mu.Unlock()
+			sum += val
+		}(i)
+		wg.Wait()
+	}
+
+	log.Print(types.Money(sum))
+
+	// --------------------------------------------------------------------------------------
+
+	// ps := 169
+	// grts := 3
+
+	// arr := []int{}
+
+	// add := ps / grts
+
+	// floatAdd := float64(ps) / float64(grts)
+
+	// for i := 0; i < grts; i++ {
+	// 	if i == grts-1 {
+	// 		if int(math.Round(floatAdd)) == add {
+	// 			arr = append(arr, add+(ps%grts))
+	// 		} else {
+	// 			arr = append(arr, add)
+	// 		}
+	// 		break
+	// 	}
+
+	// 	if int(math.Round(floatAdd)) == add {
+	// 		arr = append(arr, add)
+	// 	} else {
+	// 		arr = append(arr, add+1)
+	// 	}
+	// }
+
+	// log.Print(arr)
+
+	// 	payments := []*types.Payment{
+	// 		{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	// 		{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	// 		{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+	// 		{ID: "D", AccountID: 4, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+	// 		{ID: "E", AccountID: 5, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	// 		{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	// 	}
+
+	// 	goroutines := 2
+
+	// 	wg := sync.WaitGroup{}
+
+	// 	mu := sync.Mutex{}
+	// 	sum := ""
+
+	// 	add := len(payments) / goroutines
+	// 	lastAdd := len(payments) % goroutines
+
+	// 	start := 0
+	// 	end := add
+
+	// 	for i := 0; i < goroutines; i++ {
+	// 		wg.Add(1)
+
+	// 		go func(iter int) {
+	// 			defer wg.Done()
+
+	// 			payments := append([]*types.Payment{}, payments[start:end]...)
+
+	// 			if iter == goroutines-1 {
+	// 				start += lastAdd
+	// 				end += lastAdd
+	// 			} else {
+	// 				start += add
+	// 				end += add
+	// 			}
+
+	// 			val := ""
+	// 			for _, payment := range payments {
+	// 				val += payment.ID
+	// 			}
+	// 			mu.Lock()
+	// 			defer mu.Unlock()
+	// 			sum += val
+	// 		}(i)
+
+	// 		wg.Wait()
+	// 	}
+
+	// 	log.Print(sum)
+
+	// ----------------------------------------------------------------------------------------------------------------------------
+
+	// a := []*types.Payment{
+	// 	{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusInProgress},
+	// 	{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusInProgress},
+	// 	{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "auto", Status: types.PaymentStatusInProgress},
+	// 	{ID: "D", AccountID: 4, Amount: 40_000_00, Category: "auto", Status: types.PaymentStatusInProgress},
+	// }
+
+	// b := append([]*types.Payment{}, a[1:4]...)
+
+	// log.Print(a)
+	// log.Print(b)
 
 	// accounts := []*types.Account{
 	// 	{ID: 1, Phone: "+992000000001", Balance: 10_000_00},
