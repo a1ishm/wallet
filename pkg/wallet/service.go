@@ -20,7 +20,7 @@ var ErrPhoneRegistered = errors.New("phone already registered")
 var ErrAmountMustBePositive = errors.New("amount must be greater than zero")
 var ErrAccountNotFound = errors.New("account not found")
 var ErrNotEnoughBalance = errors.New("not enough balance")
-var ErrPaymentNotFound = errors.New("payment not found")
+var ErrPaymentNotFound = errors.New("payment(s) not found")
 var ErrFavoriteNotFound = errors.New("favorite not found")
 
 type Error string
@@ -844,7 +844,7 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 	wg := sync.WaitGroup{}
 	mu := sync.Mutex{}
 
-	var filteredPayments []types.Payment
+	filteredPayments := []types.Payment{}
 	start := 0
 	end := 0
 	accountFound := false
@@ -856,7 +856,7 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 		}
 	}
 	if !accountFound {
-		return nil, Error("account does not exist")
+		return nil, ErrAccountNotFound
 	}
 
 	if goroutines > len(s.payments) {
@@ -905,7 +905,7 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 			payments := append([]*types.Payment{}, s.payments[start:end]...)
 			start += ratio[iter]
 
-			filtered := []*types.Payment{}
+			var filtered []*types.Payment
 			for _, payment := range payments {
 				if payment.AccountID == accountID {
 					filtered = append(filtered, payment)
@@ -921,9 +921,6 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 		wg.Wait()
 	}
 
-	if filteredPayments == nil {
-		return nil, Error("account not found by given ID")
-	}
-
 	return filteredPayments, nil
 }
+
