@@ -847,16 +847,10 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 	filteredPayments := []types.Payment{}
 	start := 0
 	end := 0
-	accountFound := false
 
-	for _, account := range s.accounts {
-		if account.ID == accountID {
-			accountFound = true
-			break
-		}
-	}
-	if !accountFound {
-		return nil, ErrAccountNotFound
+	_, err := s.FindAccountByID(accountID)
+	if err != nil {
+		return nil, err
 	}
 
 	if goroutines > len(s.payments) {
@@ -908,6 +902,79 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 			var filtered []*types.Payment
 			for _, payment := range payments {
 				if payment.AccountID == accountID {
+					filtered = append(filtered, payment)
+				}
+			}
+			
+			mu.Lock()
+			defer mu.Unlock()
+			for _, payment := range filtered {
+				filteredPayments = append(filteredPayments, *payment)
+			}
+		}(i)
+		wg.Wait()
+	}
+
+	return filteredPayments, nil
+}
+
+func (s *Service) FilterPaymentsByFn(filter func(payment types.Payment) bool, goroutines int) ([]types.Payment, error) {
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
+
+	filteredPayments := []types.Payment{}
+	start := 0
+	end := 0
+
+	if goroutines > len(s.payments) {
+		goroutines = len(s.payments)
+	}
+	if goroutines == 0 {
+		goroutines = 1
+	}
+
+	ratio := []int{}
+	add := float64(len(s.payments)) / float64(goroutines)
+	ratioSum := 0
+
+	for i := 0; i < goroutines; i++ {
+		if i == goroutines-1 {
+			ratio = append(ratio, len(s.payments)-ratioSum)
+			break
+		}
+
+		ratio = append(ratio, int(math.Ceil(add)))
+		ratioSum += ratio[i]
+	}
+
+	for i := 0; i < goroutines; i++ {
+		if goroutines == 1 {
+			payments := s.payments
+
+			var filtered []*types.Payment
+			for _, payment := range payments {
+				if filter(*payment) {
+					filtered = append(filtered, payment)
+				}
+			}
+
+			for _, payment := range filtered {
+				filteredPayments = append(filteredPayments, *payment)
+			}
+			break
+		}
+
+		wg.Add(1)
+		go func(iter int) {
+			defer wg.Done()
+
+			end += ratio[iter]
+			payments := append([]*types.Payment{}, s.payments[start:end]...)
+			start += ratio[iter]
+
+			var filtered []*types.Payment
+			for _, payment := range payments {
+				if filter(*payment) {
 					filtered = append(filtered, payment)
 				}
 			}

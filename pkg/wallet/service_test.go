@@ -348,7 +348,7 @@ func TestExportImport(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	
+
 	err = s.Import("../../files")
 	if err != nil {
 		t.Error(err)
@@ -448,6 +448,77 @@ func BenchmarkFilterPayments(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		result, err := s.FilterPayments(6, 1)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		b.StopTimer()
+		if !reflect.DeepEqual(want, result) {
+			b.Fatalf("invalid result, got %v, want %v", result, want)
+		}
+		b.StartTimer()
+	}
+}
+
+func TestFilterPayments(t *testing.T) {
+	s := newTestService()
+	want := []types.Payment{
+		{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	as := []*types.Account{
+		{ID: 1, Phone: "+992122220001", Balance: 11_111_10},
+		{ID: 2, Phone: "+992100000011", Balance: 11_111_00},
+		{ID: 3, Phone: "+992100000111", Balance: 11_110_00},
+		{ID: 4, Phone: "+992100001111", Balance: 11_100_00},
+		{ID: 6, Phone: "+992100011111", Balance: 11_000_00},
+	}
+
+	ps := []*types.Payment{
+		{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "D", AccountID: 1, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "E", AccountID: 2, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "G", AccountID: 1, Amount: 70_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	s.accounts = append(s.accounts, as...)
+	s.payments = append(s.payments, ps...)
+
+	result, err := s.FilterPayments(6, 1)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if !reflect.DeepEqual(want, result) {
+		t.Errorf("invalid result, got %v, want %v", result, want)
+	}
+}
+
+func BenchmarkFilterByFn(b *testing.B) {
+	s := newTestService()
+	want := []types.Payment{
+		{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "D", AccountID: 1, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+	}
+
+	ps := []*types.Payment{
+		{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "D", AccountID: 1, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "E", AccountID: 2, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "G", AccountID: 1, Amount: 70_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	s.payments = append(s.payments, ps...)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		result, err := s.FilterPaymentsByFn(func(payment types.Payment) bool { return payment.Category == "food" }, 2)
 		if err != nil {
 			b.Fatal(err)
 		}
