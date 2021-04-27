@@ -778,35 +778,36 @@ func (s *Service) HistoryToFiles(payments []types.Payment, dir string, records i
 
 func (s *Service) SumPayments(goroutines int) types.Money {
 	wg := sync.WaitGroup{}
-
 	mu := sync.Mutex{}
+
 	sum := int64(0)
+	start := 0
+	end := 0
 
 	if goroutines > len(s.payments) {
 		goroutines = len(s.payments)
 	}
+	if goroutines == 0 {
+		goroutines = 1
+	}
 
-	div := []int{}
-	floatAdd := float64(len(s.payments)) / float64(goroutines)
-	start := 0
-	end := 0
-	divSum := 0
+	ratio := []int{}
+	add := float64(len(s.payments)) / float64(goroutines)
+	ratioSum := 0
 
 	for i := 0; i < goroutines; i++ {
 		if i == goroutines-1 {
-			div = append(div, len(s.payments)-divSum)
+			ratio = append(ratio, len(s.payments)-ratioSum)
 			break
 		}
 
-		div = append(div, int(math.Ceil(floatAdd)))
-		divSum += div[i]
+		ratio = append(ratio, int(math.Ceil(add)))
+		ratioSum += ratio[i]
 	}
 
 	for i := 0; i < goroutines; i++ {
-		if goroutines <= 1 {
-			end += div[i]
-			payments := append([]*types.Payment{}, s.payments[start:end]...)
-			start += div[i]
+		if goroutines == 1 {
+			payments := s.payments
 
 			val := int64(0)
 			for _, payment := range payments {
@@ -820,14 +821,15 @@ func (s *Service) SumPayments(goroutines int) types.Money {
 		go func(iter int) {
 			defer wg.Done()
 
-			end += div[iter]
+			end += ratio[iter]
 			payments := append([]*types.Payment{}, s.payments[start:end]...)
-			start += div[iter]
+			start += ratio[iter]
 
 			val := int64(0)
 			for _, payment := range payments {
 				val += int64(payment.Amount)
 			}
+
 			mu.Lock()
 			defer mu.Unlock()
 			sum += val
@@ -836,4 +838,90 @@ func (s *Service) SumPayments(goroutines int) types.Money {
 	}
 
 	return types.Money(sum)
+}
+
+func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payment, error) {
+	wg := sync.WaitGroup{}
+	mu := sync.Mutex{}
+
+	filteredPayments := []types.Payment{}
+	start := 0
+	end := 0
+
+	if goroutines > len(s.payments) {
+		goroutines = len(s.payments)
+	}
+	if goroutines == 0 {
+		goroutines = 1
+	}
+
+	ratio := []int{}
+	add := float64(len(s.payments)) / float64(goroutines)
+	ratioSum := 0
+
+	for i := 0; i < goroutines; i++ {
+		if i == goroutines-1 {
+			ratio = append(ratio, len(s.payments)-ratioSum)
+			break
+		}
+
+		ratio = append(ratio, int(math.Ceil(add)))
+		ratioSum += ratio[i]
+	}
+
+	for i := 0; i < goroutines; i++ {
+		if goroutines == 1 {
+			payments := s.payments
+
+			filtered := []*types.Payment{}
+			for _, payment := range payments {
+				if payment.AccountID == accountID {
+					filtered = append(filtered, payment)
+				}
+			}
+
+			if len(filtered) == 0 {
+				break
+			}
+
+			for _, payment := range filtered {
+				filteredPayments = append(filteredPayments, *payment)
+			}
+			break
+		}
+
+		wg.Add(1)
+		go func(iter int) {
+			defer wg.Done()
+
+			end += ratio[iter]
+			payments := append([]*types.Payment{}, s.payments[start:end]...)
+			start += ratio[iter]
+
+			filtered := []*types.Payment{}
+			for _, payment := range payments {
+				if payment.AccountID == accountID {
+					filtered = append(filtered, payment)
+				}
+			}
+			
+			if len(filtered) == 0 {
+				return
+			}
+
+			mu.Lock()
+			defer mu.Unlock()
+			for _, payment := range filtered {
+				filteredPayments = append(filteredPayments, *payment)
+			}
+		}(i)
+		wg.Wait()
+	}
+
+	if len(filteredPayments) == 0 {
+		err := "payments with AccountID=" + strconv.Itoa(int(accountID)) + " not found"
+		return nil, Error(err)
+	}
+
+	return filteredPayments, nil
 }
