@@ -421,8 +421,15 @@ func BenchmarkSumPayments(b *testing.B) {
 func BenchmarkFilterPayments(b *testing.B) {
 	s := newTestService()
 	want := []types.Payment{
-		{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
-		{ID: "E", AccountID: 2, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	as := []*types.Account{
+		{ID: 1, Phone: "+992122220001", Balance: 11_111_10},
+		{ID: 2, Phone: "+992100000011", Balance: 11_111_00},
+		{ID: 3, Phone: "+992100000111", Balance: 11_110_00},
+		{ID: 4, Phone: "+992100001111", Balance: 11_100_00},
+		{ID: 6, Phone: "+992100011111", Balance: 11_000_00},
 	}
 
 	ps := []*types.Payment{
@@ -435,11 +442,12 @@ func BenchmarkFilterPayments(b *testing.B) {
 		{ID: "G", AccountID: 1, Amount: 70_000_00, Category: "auto", Status: types.PaymentStatusOk},
 	}
 
+	s.accounts = append(s.accounts, as...)
 	s.payments = append(s.payments, ps...)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		result, err := s.FilterPayments(2, 3)
+		result, err := s.FilterPayments(6, 1)
 		if err != nil {
 			b.Fatal(err)
 		}

@@ -3,7 +3,8 @@ package main
 import (
 	// "io"
 	"log"
-	"math"
+
+	// "math"
 	// "sync"
 	// "os"
 	// "path/filepath"
@@ -13,6 +14,35 @@ import (
 )
 
 func main() {
+	defer log.Print("oh sorry")
+	a := true
+	if a {
+		log.Print("bye")
+		return
+	}
+
+
+	// arr := []types.Payment{}
+	// id := int64(4)
+
+	// ps := []*types.Payment{
+	// 	{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	// 	{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	// 	{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+	// 	{ID: "D", AccountID: 1, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+	// 	{ID: "E", AccountID: 2, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	// 	{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	// 	{ID: "G", AccountID: 1, Amount: 70_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	// }
+
+	// for _, p := range ps {
+	// 	if p.AccountID == id {
+	// 		arr = append(arr, *p)
+	// 	}
+	// }
+
+	// log.Print(arr)
+
 	// goroutines := 3
 
 	// ps := []*types.Payment{
@@ -86,33 +116,33 @@ func main() {
 
 	// --------------------------------------------------------------------------------------
 
-	pss := []int{4, 7, 9, 13, 27, 33, 49}
-	grts := 4
+	// pss := []int{4, 7, 9, 13, 27, 33, 49}
+	// grts := 4
 
-	for _, ps := range pss {
-		divSum := 0
+	// for _, ps := range pss {
+	// 	divSum := 0
 	
-		arr := []int{}
+	// 	arr := []int{}
 	
-		floatAdd := float64(ps) / float64(grts)
+	// 	floatAdd := float64(ps) / float64(grts)
 	
-		for i := 0; i < grts; i++ {
-			if i == grts-1 {
-				arr = append(arr, ps-divSum)
-				break
-			}
+	// 	for i := 0; i < grts; i++ {
+	// 		if i == grts-1 {
+	// 			arr = append(arr, ps-divSum)
+	// 			break
+	// 		}
 	
-			arr = append(arr, int(math.Ceil(floatAdd)))
-			divSum += arr[i]
-		}
+	// 		arr = append(arr, int(math.Ceil(floatAdd)))
+	// 		divSum += arr[i]
+	// 	}
 
-		want := 0
-		for _, a := range arr {
-			want += a
-		}
+	// 	want := 0
+	// 	for _, a := range arr {
+	// 		want += a
+	// 	}
 	
-		log.Printf("%v + %v + %v + %v = %v; want: %v", arr[0], arr[1], arr[2], arr[3], ps, want)	
-	}
+	// 	log.Printf("%v + %v + %v + %v = %v; want: %v", arr[0], arr[1], arr[2], arr[3], ps, want)	
+	// }
 
 	// 	payments := []*types.Payment{
 	// 		{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
