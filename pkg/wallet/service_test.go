@@ -408,10 +408,44 @@ func BenchmarkSumPayments(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		result := s.SumPayments(3)
+		result := s.SumPayments(0)
 
 		b.StopTimer()
 		if result != want {
+			b.Fatalf("invalid result, got %v, want %v", result, want)
+		}
+		b.StartTimer()
+	}
+}
+
+func BenchmarkFilterPayments(b *testing.B) {
+	s := newTestService()
+	want := []types.Payment{
+		{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "E", AccountID: 2, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	ps := []*types.Payment{
+		{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "D", AccountID: 1, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "E", AccountID: 2, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "G", AccountID: 1, Amount: 70_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	s.payments = append(s.payments, ps...)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		result, err := s.FilterPayments(2, 3)
+		if err != nil {
+			b.Fatal(err)
+		}
+
+		b.StopTimer()
+		if !reflect.DeepEqual(want, result) {
 			b.Fatalf("invalid result, got %v, want %v", result, want)
 		}
 		b.StartTimer()
