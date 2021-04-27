@@ -473,7 +473,7 @@ func (s *Service) Import(dir string) error {
 	pExist := true
 	fExist := true
 	eof := false
-	found := false
+	accountFound := false
 	var reader *bufio.Reader
 	var nextAccountID int64
 
@@ -534,14 +534,14 @@ func (s *Service) Import(dir string) error {
 		for i, acc := range s.accounts {
 			if acc.ID == account.ID {
 				s.accounts[i] = &account
-				found = true
+				accountFound = true
 				break
 			}
 		}
-		if !found {
+		if !accountFound {
 			s.accounts = append(s.accounts, &account)
 		}
-		found = false
+		accountFound = false
 
 		if eof {
 			break
@@ -585,14 +585,14 @@ func (s *Service) Import(dir string) error {
 		for i, paym := range s.payments {
 			if paym.ID == payment.ID {
 				s.payments[i] = &payment
-				found = true
+				accountFound = true
 				break
 			}
 		}
-		if !found {
+		if !accountFound {
 			s.payments = append(s.payments, &payment)
 		}
-		found = false
+		accountFound = false
 
 		if eof {
 			break
@@ -636,14 +636,14 @@ func (s *Service) Import(dir string) error {
 		for i, fav := range s.favorites {
 			if fav.ID == favorite.ID {
 				s.favorites[i] = &favorite
-				found = true
+				accountFound = true
 				break
 			}
 		}
-		if !found {
+		if !accountFound {
 			s.favorites = append(s.favorites, &favorite)
 		}
-		found = false
+		accountFound = false
 
 		if eof {
 			break
@@ -844,9 +844,20 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 	wg := sync.WaitGroup{}
 	mu := sync.Mutex{}
 
-	filteredPayments := []types.Payment{}
+	var filteredPayments []types.Payment
 	start := 0
 	end := 0
+	accountFound := false
+
+	for _, account := range s.accounts {
+		if account.ID == accountID {
+			accountFound = true
+			break
+		}
+	}
+	if !accountFound {
+		return nil, Error("account does not exist")
+	}
 
 	if goroutines > len(s.payments) {
 		goroutines = len(s.payments)
@@ -873,15 +884,11 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 		if goroutines == 1 {
 			payments := s.payments
 
-			filtered := []*types.Payment{}
+			var filtered []*types.Payment
 			for _, payment := range payments {
 				if payment.AccountID == accountID {
 					filtered = append(filtered, payment)
 				}
-			}
-
-			if len(filtered) == 0 {
-				break
 			}
 
 			for _, payment := range filtered {
@@ -905,10 +912,6 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 				}
 			}
 			
-			if len(filtered) == 0 {
-				return
-			}
-
 			mu.Lock()
 			defer mu.Unlock()
 			for _, payment := range filtered {
@@ -918,9 +921,8 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 		wg.Wait()
 	}
 
-	if len(filteredPayments) == 0 {
-		err := "payments with AccountID=" + strconv.Itoa(int(accountID)) + " not found"
-		return nil, Error(err)
+	if filteredPayments == nil {
+		return nil, Error("account not found by given ID")
 	}
 
 	return filteredPayments, nil
