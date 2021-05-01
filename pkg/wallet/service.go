@@ -905,7 +905,7 @@ func (s *Service) FilterPayments(accountID int64, goroutines int) ([]types.Payme
 					filtered = append(filtered, payment)
 				}
 			}
-			
+
 			mu.Lock()
 			defer mu.Unlock()
 			for _, payment := range filtered {
@@ -978,7 +978,7 @@ func (s *Service) FilterPaymentsByFn(filter func(payment types.Payment) bool, go
 					filtered = append(filtered, payment)
 				}
 			}
-			
+
 			mu.Lock()
 			defer mu.Unlock()
 			for _, payment := range filtered {
@@ -991,3 +991,42 @@ func (s *Service) FilterPaymentsByFn(filter func(payment types.Payment) bool, go
 	return filteredPayments, nil
 }
 
+func (s *Service) SumPaymentsWithProgress() <-chan types.Progress {
+	wg := sync.WaitGroup{}
+
+	size := 100_0000
+	goroutines := len(s.payments) / size
+
+	if goroutines <= 1 {
+		goroutines = 1
+	}
+	ch := make(chan types.Progress)
+
+	for i := 0; i < goroutines; i++ {
+		wg.Add(1)
+		go func(ch chan<- types.Progress, payments []*types.Payment, j int) {
+			if goroutines == 1 {
+				payments = s.payments
+			} else {
+				payments = payments[j*size : (j+1)*size]
+			}
+
+			sum := types.Money(0)
+			defer wg.Done()
+			for _, payment := range payments {
+				sum += payment.Amount
+			}
+			ch <- types.Progress{
+				Part:   len(payments),
+				Result: sum,
+			}
+		}(ch, s.payments, i)
+	}
+
+	go func() {
+		defer close(ch)
+		wg.Wait()
+	}()
+
+	return ch
+}

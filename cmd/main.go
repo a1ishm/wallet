@@ -2,7 +2,7 @@ package main
 
 import (
 	// "io"
-	"log"
+	// "log"
 
 	// "math"
 	// "sync"
@@ -14,12 +14,13 @@ import (
 )
 
 func main() {
-	defer log.Print("oh sorry")
-	a := true
-	if a {
-		log.Print("bye")
-		return
-	}
+
+	// defer log.Print("oh sorry")
+	// a := true
+	// if a {
+	// 	log.Print("bye")
+	// 	return
+	// }
 
 
 	// arr := []types.Payment{}

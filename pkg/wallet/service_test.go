@@ -2,6 +2,7 @@ package wallet
 
 import (
 	"fmt"
+	// "log"
 	"math/rand"
 	"reflect"
 	"testing"
@@ -529,4 +530,50 @@ func BenchmarkFilterByFn(b *testing.B) {
 		}
 		b.StartTimer()
 	}
+}
+
+func TestSumPaymentsWithProgress(t *testing.T) {
+	s := newTestService()
+	want := types.Progress{
+		Part: 20,
+		Result: 77000000,
+	}
+
+	ps := []*types.Payment{
+		{ID: "A", AccountID: 1, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "B", AccountID: 2, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "C", AccountID: 3, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "D", AccountID: 4, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "E", AccountID: 5, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "F", AccountID: 6, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "G", AccountID: 7, Amount: 70_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "H", AccountID: 8, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "I", AccountID: 9, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "J", AccountID: 10, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "K", AccountID: 11, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "L", AccountID: 12, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "M", AccountID: 13, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "N", AccountID: 14, Amount: 70_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "O", AccountID: 15, Amount: 10_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "P", AccountID: 16, Amount: 20_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "Q", AccountID: 17, Amount: 30_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "R", AccountID: 18, Amount: 40_000_00, Category: "food", Status: types.PaymentStatusOk},
+		{ID: "S", AccountID: 19, Amount: 50_000_00, Category: "auto", Status: types.PaymentStatusOk},
+		{ID: "T", AccountID: 20, Amount: 60_000_00, Category: "auto", Status: types.PaymentStatusOk},
+	}
+
+	s.payments = append(s.payments, ps...)
+
+	ch := s.SumPaymentsWithProgress()
+
+	var result types.Progress
+
+	for v := range ch {
+		result = v
+	}
+
+	if !reflect.DeepEqual(want, result) {
+		t.Errorf("invalid result, got %v, want %v", result, want)
+	}
+
 }
